@@ -49,3 +49,22 @@ app.post('/reserve', (req, res) => {
 app.listen(PORT, () => {
   console.log(`✅ Server running at http://localhost:${PORT}`);
 });
+// Delete a reservation
+app.delete('/delete', (req, res) => {
+  const { date, time } = req.body;
+  if (!date || !time) {
+    return res.status(400).json({ message: 'Missing date or time' });
+  }
+
+  let data = fs.existsSync(FILE) ? JSON.parse(fs.readFileSync(FILE)) : [];
+  const initialLength = data.length;
+
+  data = data.filter(r => !(r.date === date && r.time === time));
+
+  if (data.length === initialLength) {
+    return res.status(404).json({ message: 'Reservation not found' });
+  }
+
+  fs.writeFileSync(FILE, JSON.stringify(data, null, 2));
+  res.status(200).json({ message: 'Reservation deleted' });
+});
