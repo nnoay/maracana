@@ -50,6 +50,9 @@ document.addEventListener('DOMContentLoaded', function () {
     const form = document.getElementById('reservationForm');
     const reservationsList = document.getElementById('reservationsList');
 
+    // Check if admin mode is on (you visit the page with ?admin=1)
+    const isAdmin = new URLSearchParams(window.location.search).get('admin') === '1';
+
     async function fetchReservations() {
         const res = await fetch('/reservations');
         const reservations = await res.json();
@@ -79,32 +82,33 @@ document.addEventListener('DOMContentLoaded', function () {
                 <p>Date: ${res.date}</p>
                 <p>Heure: ${res.time} - ${endTime}</p>
                 <p>Téléphone: ${res.phone}</p>
-                <button class="mt-2 bg-red-600 hover:bg-red-700 text-white px-3 py-1 rounded delete-btn"
-                    data-date="${res.date}" data-time="${res.time}">Supprimer</button>
+                ${isAdmin ? `<button class="mt-2 bg-red-600 hover:bg-red-700 text-white px-3 py-1 rounded delete-btn" data-date="${res.date}" data-time="${res.time}">Supprimer</button>` : ''}
             `;
 
             reservationsList.appendChild(li);
         });
 
-        document.querySelectorAll('.delete-btn').forEach(btn => {
-            btn.addEventListener('click', async () => {
-                const date = btn.dataset.date;
-                const time = btn.dataset.time;
+        if (isAdmin) {
+            document.querySelectorAll('.delete-btn').forEach(btn => {
+                btn.addEventListener('click', async () => {
+                    const date = btn.dataset.date;
+                    const time = btn.dataset.time;
 
-                if (confirm("Supprimer cette réservation ?")) {
-                    const res = await fetch('/delete', {
-                        method: 'DELETE',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ date, time })
-                    });
-                    if (res.ok) {
-                        fetchReservations();
-                    } else {
-                        alert("Erreur lors de la suppression.");
+                    if (confirm("Supprimer cette réservation ?")) {
+                        const res = await fetch('/delete', {
+                            method: 'DELETE',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ date, time })
+                        });
+                        if (res.ok) {
+                            fetchReservations();
+                        } else {
+                            alert("Erreur lors de la suppression.");
+                        }
                     }
-                }
+                });
             });
-        });
+        }
     }
 
     form.addEventListener('submit', async function (e) {
