@@ -1,0 +1,250 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Maracana Stadium</title>
+    <base target="_self">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f5f5f5;
+            color: #333;
+        }
+        
+        .head {
+            background-color: #1a365d;
+            color: white;
+            padding: 1.5rem;
+            text-align: center;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+        
+        .list ul {
+            display: flex;
+            justify-content: center;
+            list-style: none;
+            padding: 0;
+            gap: 2rem;
+            margin-top: 1rem;
+        }
+        
+        .list a {
+            color: white;
+            text-decoration: none;
+            font-weight: 500;
+            padding: 0.5rem 1rem;
+            border-radius: 4px;
+            transition: background-color 0.3s;
+        }
+        
+        .list a:hover {
+            background-color: #2c5282;
+        }
+        
+        .for, .form {
+            background-color: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            padding: 2rem;
+            margin: 2rem auto;
+            max-width: 800px;
+        }
+        
+        form {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+        
+        label {
+            font-weight: 500;
+            margin-bottom: 0.5rem;
+        }
+        
+        input {
+            padding: 0.75rem;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            width: 100%;
+            max-width: 400px;
+        }
+        
+        button {
+            background-color: #1a365d;
+            color: white;
+            padding: 0.75rem 1.5rem;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-weight: 500;
+            transition: background-color 0.3s;
+            width: fit-content;
+        }
+        
+        button:hover {
+            background-color: #2c5282;
+        }
+        
+        #reservationsList {
+            list-style: none;
+            padding: 0;
+        }
+        
+        .reservation-item {
+            background-color: #f8fafc;
+            border-left: 4px solid #1a365d;
+            padding: 1rem;
+            margin-bottom: 1rem;
+            border-radius: 4px;
+        }
+        
+        .reservation-item h3 {
+            margin: 0;
+            color: #1a365d;
+        }
+        
+        .reservation-item p {
+            margin: 0.5rem 0 0;
+            color: #4a5568;
+        }
+        
+        @media (max-width: 768px) {
+            .for, .form {
+                margin: 1rem;
+                padding: 1rem;
+            }
+            
+            .list ul {
+                flex-direction: column;
+                gap: 0.5rem;
+            }
+        }
+    </style>
+</head>
+<body>
+<div class="head">
+    <h1 class="text-3xl font-bold">Maracana Stadium</h1>
+    <div class="list">
+        <ul>
+            <li><a href="#">Home</a></li>
+            <li><a href="#">Contact</a></li>
+        </ul>
+    </div>
+</div>
+
+<div class="for">
+    <form id="reservationForm" method="post" action="/">
+        <h2 class="text-2xl font-semibold text-gray-800">Make a Reservation</h2>
+        <div>
+            <label for="nom">Nom et Prénom</label>
+            <input id="nom" type="text" placeholder="Nom et Prénom" required>
+        </div>
+        <div>
+            <label for="num">Numéro de Telephone</label>
+            <input id="num" type="tel" placeholder="Numéro" required>
+        </div>
+        <div>
+            <label for="date">La date</label>
+            <input id="date" type="date" required>
+        </div>
+        <div>
+            <label for="time">Heure de début</label>
+            <input id="time" type="time" min="08:00" max="22:00" step="1800" required>
+            <small class="text-gray-500">Les réservations durent 1h30</small>
+        </div>
+        <button type="submit">Confirmer</button>
+    </form>
+</div>
+
+<div class="form">
+    <h2 class="text-2xl font-semibold text-gray-800">Reservations</h2>
+    <ul id="reservationsList"></ul>
+</div>
+
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const form = document.getElementById('reservationForm');
+    const reservationsList = document.getElementById('reservationsList');
+
+    // Load reservations from server
+    async function fetchReservations() {
+        const res = await fetch('/reservations');
+        const reservations = await res.json();
+        displayReservations(reservations);
+    }
+
+    // Show reservations
+    function displayReservations(reservations) {
+        reservationsList.innerHTML = '';
+
+        if (reservations.length === 0) {
+            reservationsList.innerHTML = '<p class="text-gray-500">Aucune réservation pour le moment.</p>';
+            return;
+        }
+
+        reservations.sort((a, b) => {
+            const dateA = new Date(`${a.date} ${a.time}`);
+            const dateB = new Date(`${b.date} ${b.time}`);
+            return dateA - dateB;
+        });
+
+        reservations.forEach(reservation => {
+            const li = document.createElement('li');
+            li.className = 'reservation-item';
+
+            const [hours, minutes] = reservation.time.split(':');
+            const endTime = new Date(0, 0, 0, parseInt(hours), parseInt(minutes));
+            endTime.setMinutes(endTime.getMinutes() + 90);
+            const formattedEnd = endTime.toTimeString().substring(0, 5);
+
+            li.innerHTML = `
+                <h3>${reservation.name}</h3>
+                <p>Date: ${reservation.date}</p>
+                <p>Heure: ${reservation.time} - ${formattedEnd}</p>
+                <p>Téléphone: ${reservation.phone}</p>
+            `;
+
+            reservationsList.appendChild(li);
+        });
+    }
+
+    // Handle form submission
+    form.addEventListener('submit', async function(e) {
+        e.preventDefault();
+
+        const reservation = {
+            name: document.getElementById('nom').value,
+            phone: document.getElementById('num').value,
+            date: document.getElementById('date').value,
+            time: document.getElementById('time').value
+        };
+
+        const res = await fetch('/reserve', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(reservation)
+        });
+
+        if (res.status === 409) {
+            alert("Ce créneau horaire est déjà réservé. Veuillez choisir un autre moment.");
+        } else if (res.ok) {
+            alert("Réservation confirmée avec succès!");
+            form.reset();
+            fetchReservations();
+        } else {
+            alert("Erreur lors de la réservation.");
+        }
+    });
+
+    // Init
+    fetchReservations();
+    const today = new Date().toISOString().split('T')[0];
+    document.getElementById('date').min = today;
+});
+</script>
+
+</body>
+</html>
